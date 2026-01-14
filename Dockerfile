@@ -1,8 +1,31 @@
-FROM ngnix:alpine
+#FROM node:20-alpine As builder
+#
+#WORKDIR /app
+#COPY package.json package-lock.json ./
+#RUN npm install 
+#COPY . .
+#ARG VITE_API_URL
+#ENV VITE_API_URL=$VITE_API_URL
+#RUN npm run build
+#FROM nginx:alpine
+#COPY --from=builder /app/dist /usr/share/nginx/html
+#
+#COPY nginx.conf /etc/nginx/conf.d/default.conf
+#
+#EXPOSE  80
+#
+#CMD ["nginx", "-g", "daemon off;"]
 
-COPY . /usr/share/nginx/html/App.jsx
+FROM node:20-alpine AS build
 
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-CMD ["nginx", "-g", "daemon off;"]
+# Etapa 2: nginx
+FROM nginx:stable-alpine
+COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
-
+CMD ["nginx", "-g", "daemon off;"]
